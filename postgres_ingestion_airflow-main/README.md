@@ -1,71 +1,100 @@
-# postgres_ingestion_airflow
-
-> Author: Danilo Machado
+# ETL Automatizado com Apache Airflow — AdventureWorks 
 
 ## Introdução
 
-As ferramentas de orquestração de pipeline de dados desempenham um papel essencial no dia a dia de trabalho do engenheiro de dados. Neste projeto, foi utilizado o Apache Airflow, instalado numa máquina local e rodando dentro de um contâiner no Docker, para automatizar a ingestão de dados provenientes de uma API dentro do banco de dados PostgreSQL on-premise. Os dados utilizados são do site [Random User Generator API](https://randomuser.me/documentation), sendo fictícios e apenas para fins didáticos. Para este projeto, foi selecionado o número de [15 registros por requisição](https://randomuser.me/api/?results=15).
-
-## Depedências do projeto
-- [Python 3.13](https://www.python.org)
-- [Docker](https://docs.docker.com/)
-- [Apache Airflow](https://airflow.apache.org/docs/)
-- [PostreSQL](https://www.postgresql.org/docs/)
-
-## Bibliotecas e módulos utilizados
-- pandas
-- requests
-- configparser
-- sqlalchemy
-- datetime
-- airflow
-- airflow.operators.python
-
-## Execução do projeto
-
-A figura a seguir apresenta o pipeline de dados deste projeto:
-
-<div style='background-color:#fff;padding:24px;'>
-<img src='./docs/pipeline.png' alt='Extração e Carregamento de dados em bucket S3 na AWS'/>
-</div>
-
-O script **postgres_ingestion.py** executa uma requisição na API do site e recebe os dados em formato JSON. Em seguida, o script seleciona os dados de interesse e cria um DataFrame, o qual pode ser carregado diretamente no banco de dados. No entanto, para controlar os tipos de cada coluna, foi criada a tabela **users** com as colunas já formatadas usando o script **create_table.sql**. As figuras a seguir mostram a tabela criada com suas colunas pré formatadas:
-
-<div style='background-color:#fff;padding:24px;'>
-<img src='./docs/table_created.png' alt='Extração e Carregamento de dados em bucket S3 na AWS'/>
-</div>
-
-<div style='background-color:#fff;padding:24px;'>
-<img src='./docs/empty_table.png' alt='Extração e Carregamento de dados em bucket S3 na AWS'/>
-</div>
+Este projeto tem como objetivo construir e orquestrar um pipeline de ETL automatizado utilizando o Apache Airflow, com base no conjunto de dados do AdventureWorks. A solução aplica conceitos de modelagem dimensional, extração de dados com Python, e análise de indicadores (KPIs) em um ambiente integrado com SQL Server e PostgreSQL.
 
 
-### Criação da DAG para orquestração
+## 🧩 Estrutura do Projeto
 
-Na criação da DAG que será executada pelo Apache Airflow para execução do fluxo de trabalho, foi adicionada a tag **airflow_project** para facilitar encontrá-la ao acessar a interface do Airflow, como mostram as figuras a seguir. Note a definição de agendamento (**schedule_interval**), que neste caso implica em uma execução por minuto enquanto a DAG estiver ativa. 
+```
+POSTGRES_INGESTION_AIRFLOW-MAIN/
+├── dags/                  # DAG principal do Airflow (ETL.py)
+│   └── scripts/           # Funções de extração, transformação e carga (ext.py)
+├── config/                # Configuração de conexões (config.py)
+├── SQL/                   # Consultas SQL para análise de KPIs
+├── docker-compose.yaml    # Infraestrutura com Airflow e dependências
+└── requirements.txt       # Dependências do projeto
+```
 
-<div style='background-color:#fff;padding:24px;'>
-<img src='./docs/dag_schedule.png' alt='Extração e Carregamento de dados em bucket S3 na AWS'/>
-</div>
+## ⚙️ Tecnologias Utilizadas
+- 	🐍 Python 3.12
+-	🛠️ Apache Airflow 2.7+
+-	🧮 Pandas, SQLAlchemy, PyODBC, Psycopg2
+-	🗄️ SQL Server 2022 (AdventureWorks)
+- 🐘 PostgreSQL 15
+-	🐳 Docker + Docker Compose
 
-<div style='background-color:#fff;padding:24px;'>
-<img src='./docs/dag.png' alt='Extração e Carregamento de dados em bucket S3 na AWS'/>
-</div>
 
-Após a primeira execução, temos a primeira ingestão de dados, com 15 novos registros como se pode ver nas imagens abaixo:
+## 🧱 Modelo Multidimensional
 
-<div style='background-color:#fff;padding:24px;'>
-<img src='./docs/first.png' alt='Extração e Carregamento de dados em bucket S3 na AWS'/>
-</div>
+O modelo segue um **esquema estrela**, com a tabela fato principal `fato_vendas` conectada às dimensões:
 
-E após 4 minutos com a DAG ativa, temos 4 execuções bem sucedidas e, portanto, um total de 60 registros:
+**Fato Principal**
+- `fato_vendas`
 
-<div style='background-color:#fff;padding:24px;'>
-<img src='./docs/four_minutes.png' alt='Extração e Carregamento de dados em bucket S3 na AWS'/>
-</div>
+**Dimensões**
+- `dim_cliente`
+- `dim_produto`
+- `dim_pessoa`
+- `dim_territorio`
+- `dim_data`
 
-<div style='background-color:#fff;padding:24px;'>
-<img src='./docs/count_four_minutes.png' alt='Extração e Carregamento de dados em bucket S3 na AWS'/>
-</div>
+## 📊 Indicadores (KPIs)
 
-Embora simples, este projeto pode ser uma base para uma aplicação mais robusta em um cenário real, onde são feitas requisições em API's para ingestão em bancos de dados, Data Warehouse ou Data Lake.
+| # | Indicador | Descrição |
+|---|------------|-----------|
+| 1 | Receita Total | Soma total de vendas realizadas |
+| 2 | Lucro Estimado |Receita líquida após custo estimado |
+| 3 | Lucro Total | Receita líquida após custos |
+| 4 | Ticket Médio | Valor médio por pedido |
+| 5 | Clientes Ativos | Total de clientes únicos com pedidos |
+| 6 | Tempo Médio entre Pedidos | Média de dias entre compras consecutivas |
+| 7 | Produtos Mais Vendidos | Ranking por quantidade vendida |
+| 8 | Receita por Região | Faturamento agrupado por território |
+| 9 | Margem por Produto | Lucro total por item |
+| 10 | Distribuição Geográfica
+ |Número de clientes por país |
+
+---
+
+## 🚀 Execução da ETL
+
+### 1️⃣ Criar o banco de dados PostgreSQL
+Crie um banco no PostgreSQL com o nome , que será utilizado como destino dos dados transformados.
+
+### 2️⃣ Execução do DAG
+
+
+O script irá:
+
+✅ Extrair dados do SQL Server (AdventureWorks)  
+✅ Transformar e padronizar os dados  
+✅ Carregar as tabelas no PostgreSQL  
+
+As tabelas criadas serão:
+- `dim_pessoa`
+- `dim_cliente`
+- `dim_produto`
+- `dim_territorio`
+- `dim_data`
+- `fato_vendas`
+
+---
+
+## 📈  Exemplo de Consulta (KPI: Produtos Mais Vendidos)
+
+```sql
+SELECT p.nome_produto, SUM(f."OrderQty") AS total_qtd
+FROM fato_vendas f
+JOIN dim_produto p ON f."ProductID" = p.id_produto
+GROUP BY p.nome_produto
+ORDER BY total_qtd DESC
+LIMIT 10;
+```
+
+---
+
+## 📚 Autor
+**Hebert Souza Raphalsky do Nascimento**  
+---
