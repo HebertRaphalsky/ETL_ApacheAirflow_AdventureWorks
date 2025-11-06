@@ -53,8 +53,7 @@ O modelo segue um **esquema estrela**, com a tabela fato principal `fato_vendas`
 | 7 | Produtos Mais Vendidos | Ranking por quantidade vendida |
 | 8 | Receita por Região | Faturamento agrupado por território |
 | 9 | Margem por Produto | Lucro total por item |
-| 10 | Distribuição Geográfica
- |Número de clientes por país |
+| 10 | Distribuição Geográfica|Número de clientes por país |
 
 ---
 
