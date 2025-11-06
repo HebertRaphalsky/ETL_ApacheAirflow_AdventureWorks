@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432" 
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+  airflow-init:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_started
+    environment:
+      PYTHONPATH: /opt/airflow
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: 'YVcSWMSXL_vec4p1oXIJ72jYE34zDSEK3GZtjAcOlc8='
+      AIRFLOW__WEBSERVER__SECRET_KEY: 'minha_chave_secreta_123'
+    volumes:
+      - ./config:/opt/airflow/config
+    entrypoint: /bin/bash
+    command: >
+      -c "
+      airflow db init &&
+      airflow users create --username airflow --password airflow --firstname Air --lastname Flow --role Admin --email airflow@example.com
+      "
+
+  airflow-webserver:
+    build: .
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      PYTHONPATH: /opt/airflow/scripts:/opt/airflow/dags
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: 'YVcSWMSXL_vec4p1oXIJ72jYE34zDSEK3GZtjAcOlc8='
+      AIRFLOW__WEBSERVER__SECRET_KEY: 'minha_chave_secreta_123'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__WEBSERVER__WORKERS: 1
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./config:/opt/airflow/config
+      - ./plugins:/opt/airflow/plugins
+      - ./logs:/opt/airflow/logs
+      - ./native_dags:/opt/airflow/unused_native_dags
+      - ./scripts:/opt/airflow/scripts
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8080:8080"
+    command: webserver
+
+  airflow-scheduler:
+    build: .
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      PYTHONPATH: /opt/airflow
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: 'YVcSWMSXL_vec4p1oXIJ72jYE34zDSEK3GZtjAcOlc8='
+      AIRFLOW__WEBSERVER__SECRET_KEY: 'minha_chave_secreta_123'
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./config:/opt/airflow/config
+      - /etc/localtime:/etc/localtime:ro
+    command: scheduler
+
+volumes:
+  postgres-db-volume:
