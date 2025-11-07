@@ -1,0 +1,2 @@
+SELECT COUNT(DISTINCT "CustomerID") AS clientes_ativos
+FROM fato_vendas;

@@ -1,0 +1,2 @@
+SELECT COUNT(DISTINCT "SalesOrderID") AS total_pedidos
+FROM fato_vendas;

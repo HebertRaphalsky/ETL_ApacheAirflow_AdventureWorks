@@ -1,0 +1,6 @@
+SELECT p."nome_produto", SUM(f."OrderQty") AS quantidade_vendida
+FROM fato_vendas f
+JOIN dim_produto p ON f."ProductID" = p."id_produto"
+GROUP BY p."nome_produto"
+ORDER BY quantidade_vendida DESC
+LIMIT 10;

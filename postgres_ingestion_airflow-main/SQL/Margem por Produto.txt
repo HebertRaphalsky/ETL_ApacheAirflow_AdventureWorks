@@ -1,0 +1,8 @@
+SELECT 
+    p."nome_produto",
+    SUM(f."LineTotal" - (f."OrderQty" * f."UnitPrice" * 0.7)) AS lucro_total
+FROM fato_vendas f
+JOIN dim_produto p ON f."ProductID" = p."id_produto"
+GROUP BY p."nome_produto"
+ORDER BY lucro_total DESC
+LIMIT 10;

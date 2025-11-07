@@ -1,0 +1,5 @@
+SELECT t."regiao", SUM(f."LineTotal") AS receita_total
+FROM fato_vendas f
+JOIN dim_territorio t ON f."TerritoryID" = t."id_territorio"
+GROUP BY t."regiao"
+ORDER BY receita_total DESC;

@@ -1,0 +1,2 @@
+SELECT AVG("LineTotal") AS ticket_medio
+FROM fato_vendas;

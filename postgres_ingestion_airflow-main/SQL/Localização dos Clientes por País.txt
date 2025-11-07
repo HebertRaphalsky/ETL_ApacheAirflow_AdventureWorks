@@ -1,0 +1,4 @@
+SELECT "pais_nome", COUNT(*) AS total_clientes
+FROM dim_cliente
+GROUP BY "pais_nome"
+ORDER BY total_clientes DESC;
